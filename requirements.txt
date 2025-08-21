@@ -33,7 +33,7 @@ certifi==2025.7.14
 cffi==1.17.1
 chardet==3.0.4
 charset-normalizer==3.4.2
-chromadb
+chromadb==0.5.5
 click==8.2.1
 cloudinary==1.44.1
 colorama==0.4.6
@@ -205,7 +205,7 @@ PyAudio==0.2.14
 pycodestyle==2.13.0
 pycparser==2.22
 pycrdt==0.12.26
-pydantic==2.11.5
+pydantic
 pydantic_core==2.33.2
 pydeck==0.9.1
 pydub==0.25.1
