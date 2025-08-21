@@ -26,6 +26,11 @@ load_dotenv()
 # --- TTS ENGINE INITIALIZATION ---
 try:
     tts_engine = pyttsx3.init(driverName='espeak')
+    # tts_engine = pyttsx3.init()  # Original line, but using 'espeak' for better compatibility
+    voices = tts_engine.getProperty('voices')
+    tts_engine.setProperty('voice', voices[0].id)  # Set to the first available voice
+    tts_engine.setProperty('rate', 150)  # Set a comfortable speaking rate
+    tts_engine.setProperty('volume', 1.0)  # Set volume to
 except Exception as e:
     st.error(f"Failed to initialize TTS engine: {e}")
     tts_engine = None
