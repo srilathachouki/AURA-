@@ -92,7 +92,7 @@ h2==3.2.0
 h5py==3.14.0
 hpack==3.0.0
 hstspreload==2025.1.1
-httpcore==0.9.1
+httpcore
 httplib2==0.22.0
 httptools==0.6.4
 httpx
