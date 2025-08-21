@@ -17,6 +17,9 @@ import pyttsx3
 # Animation Import
 from streamlit_lottie import st_lottie
 
+# --- STREAMLIT UI ---
+st.set_page_config(page_title="AURA AI", page_icon="🔮", layout="centered")
+
 # Load environment variables
 load_dotenv()
 
@@ -175,8 +178,6 @@ def get_chatbot_response(user_input, intent_model, responses_dict, gemini_model)
             st.error(f"An error occurred with the Google Gemini API: {e}", icon="🚨")
             return "Sorry, I'm having trouble connecting to my brain right now."
 
-# --- STREAMLIT UI ---
-st.set_page_config(page_title="AURA AI", page_icon="🔮", layout="centered")
 
 # Apply the custom CSS
 local_css()
