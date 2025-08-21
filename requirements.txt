@@ -82,7 +82,6 @@ google-generativeai==0.8.5
 google-pasta==0.2.0
 google-resumable-media==2.7.2
 googleapis-common-protos==1.70.0
-googletrans==4.0.0rc1
 gpt4all==2.8.2
 greenlet==3.2.3
 grpc-google-iam-v1==0.14.2
