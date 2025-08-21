@@ -123,20 +123,22 @@ def text_to_speech(text):
 def speech_to_text():
     """Listens for voice input and converts it to text."""
     r = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.info("Listening... Speak now!")
-        try:
+    try: # Add a try block here
+        with sr.Microphone() as source:
+            st.info("Listening... Speak now!")
             r.adjust_for_ambient_noise(source)
             audio = r.listen(source, timeout=5, phrase_time_limit=10)
             st.info("Recognizing...")
             text = r.recognize_google(audio)
             return text
-        except sr.UnknownValueError:
-            st.warning("Sorry, I could not understand the audio.")
-        except sr.RequestError as e:
-            st.error(f"Could not request results from Google Speech Recognition service; {e}")
-        except Exception:
-            st.warning("An error occurred during speech recognition.")
+    except AttributeError:
+        st.error("No microphone found. Please ensure your microphone is enabled and permissions are granted.", icon="🎙️")
+    except sr.UnknownValueError:
+        st.warning("Sorry, I could not understand the audio.")
+    except sr.RequestError as e:
+        st.error(f"Could not request results from Google Speech Recognition service; {e}")
+    except Exception as e:
+        st.warning(f"An error occurred during speech recognition: {e}")
     return None
 
 # --- CORE LOGIC ---
@@ -255,7 +257,4 @@ if text_prompt:
     final_prompt = text_prompt
 
 # Process the final prompt if it exists
-if final_prompt:
-    # FIX: Removed the trailing comma and incorrect st.rerun() logic
-    process_and_display_chat(final_prompt)
     st.rerun() # Use rerun at the end to correctly reset the input widgets
