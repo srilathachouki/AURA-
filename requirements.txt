@@ -214,7 +214,6 @@ pyjsparser==2.7.1
 PyJWT==2.10.1
 pyparsing==3.2.3
 PyPika==0.48.9
-pypiwin32==223
 PyPrind==2.11.3
 pyproject_hooks==1.2.0
 pyreadline3==3.5.4
