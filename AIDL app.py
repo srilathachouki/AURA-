@@ -12,25 +12,17 @@ import requests
 
 # Voice Imports
 import speech_recognition as sr
-import pyttsx3
+from gtts import gTTS
+from io import BytesIO
 
 # Animation Import
 from streamlit_lottie import st_lottie
 
 # --- STREAMLIT UI ---
-st.set_page_config(page_title="AURA AI", page_icon="🔮", layout="centered")
+st.set_page_config(page_title="AURA AI", page_icon="🔮", layout="wide")
 
 # Load environment variables
 load_dotenv()
-
-# --- TTS ENGINE INITIALIZATION ---
-try:
-    tts_engine = pyttsx3.init(driverName='espeak')
-    tts_engine.setProperty('rate', 150)
-    tts_engine.setProperty('volume', 1.0)
-except Exception as e:
-    st.error(f"Failed to initialize TTS engine: {e}")
-    tts_engine = None
     
 # --- INTENTS JSON ---
 INTENTS_JSON = """
@@ -84,25 +76,27 @@ def local_css():
         }
         /* Chat input */
         [data-testid="stChatInput"] {
-            background-color: rgba(0, 0, 0, 0.2);
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
         }
         [data-testid="stChatInput"] > div > div > textarea { color: white; }
+
         /* Microphone button */
         [data-testid="stButton"] button {
             background-color: #7b2cbf;
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 50px;
+            border-radius: 10px;
+            width: 100%;
             height: 50px;
             font-size: 24px;
             transition: all 0.3s ease;
         }
         [data-testid="stButton"] button:hover {
             background-color: #9d4edd;
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
         /* Sidebar styling */
         [data-testid="stSidebar"] {
@@ -114,18 +108,20 @@ def local_css():
 
 # --- VOICE HELPER FUNCTIONS ---
 def text_to_speech(text):
-    """Converts text to speech if the engine is available."""
-    if tts_engine:
-        try:
-            tts_engine.say(text)
-            tts_engine.runAndWait()
-        except Exception as e:
-            st.warning(f"Could not process text-to-speech: {e}")
+    """Converts text to speech using gTTS and plays it in Streamlit."""
+    try:
+        tts = gTTS(text=text, lang='en')
+        audio_fp = BytesIO()
+        tts.write_to_fp(audio_fp)
+        audio_fp.seek(0)
+        st.audio(audio_fp, format='audio/mp3')
+    except Exception as e:
+        st.error(f"Failed to generate speech: {e}")
 
 def speech_to_text():
     """Listens for voice input and converts it to text."""
     r = sr.Recognizer()
-    try: # Add a try block here
+    try:
         with sr.Microphone() as source:
             st.info("Listening... Speak now!")
             r.adjust_for_ambient_noise(source)
@@ -159,10 +155,10 @@ def load_intent_model():
     model.fit(patterns, tags)
     return model, responses_dict
 
-# IMPROVEMENT: Cache the Gemini model resource to avoid re-initializing it on every run.
 @st.cache_resource
 def load_gemini_model():
     """Loads the Gemini generative model."""
+    # FIXED: Corrected the model name from 'gem-...' to 'gemini-...'
     return genai.GenerativeModel('gemini-1.5-flash-latest')
 
 def get_chatbot_response(user_input, intent_model, responses_dict, gemini_model):
@@ -170,7 +166,6 @@ def get_chatbot_response(user_input, intent_model, responses_dict, gemini_model)
     user_input_lower = user_input.lower()
     probabilities = intent_model.predict_proba([user_input_lower])[0]
     
-    # FIX: Use an 'else' block. The Gemini API should only be called if the intent is NOT recognized.
     if max(probabilities) > 0.65:
         predicted_tag = intent_model.classes_[probabilities.argmax()]
         return random.choice(responses_dict[predicted_tag])
@@ -182,13 +177,14 @@ def get_chatbot_response(user_input, intent_model, responses_dict, gemini_model)
             st.error(f"An error occurred with the Google Gemini API: {e}", icon="🚨")
             return "Sorry, I'm having trouble connecting to my brain right now."
 
+# --- MAIN APP ---
 
 # Apply the custom CSS
 local_css()
 
 # Load models
 intent_model, intent_responses = load_intent_model()
-gemini_model = load_gemini_model() # <-- IMPROVEMENT
+gemini_model = load_gemini_model()
 
 # Sidebar
 with st.sidebar:
@@ -202,6 +198,13 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("Built with ❤️ using [Streamlit](https://streamlit.io).")
     st.markdown("By Chouki Srilatha")
+
+    st.markdown("---")
+    st.header("Voice Input")
+    if st.button("Click to Speak 🎤", help="Use your voice to chat"):
+        voice_prompt = speech_to_text()
+        if voice_prompt:
+            process_and_display_chat(voice_prompt)
 
 st.title("🔮 AURA AI")
 st.caption("Your friendly AI assistant. Try typing or using the mic.")
@@ -225,38 +228,18 @@ for message in st.session_state.messages:
 
 def process_and_display_chat(prompt):
     """Main function to process a prompt and update the chat UI."""
-    # Add user message to UI and history
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Get and display assistant response
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             response = get_chatbot_response(prompt, intent_model, intent_responses, gemini_model)
         st.markdown(response)
     
-    # Add assistant response to history and speak it
     st.session_state.messages.append({"role": "assistant", "content": response})
     text_to_speech(response)
-    # time.sleep(0.5) # <-- IMPROVEMENT: Removed unnecessary sleep
 
 # --- Input Handling ---
-# IMPROVEMENT: Refactored input logic to be cleaner.
-final_prompt = None
-
-# Set up columns for input field and mic button
-col1, col2 = st.columns([7, 1])
-with col1:
-    text_prompt = st.chat_input("What's on your mind?")
-with col2:
-    if st.button("🎤", help="Click to speak"):
-        voice_prompt = speech_to_text()
-        if voice_prompt:
-            final_prompt = voice_prompt
-
-if text_prompt:
-    final_prompt = text_prompt
-
-# Process the final prompt if it exists
-    st.rerun() # Use rerun at the end to correctly reset the input widgets
+if text_prompt := st.chat_input("What's on your mind?"):
+    process_and_display_chat(text_prompt)
